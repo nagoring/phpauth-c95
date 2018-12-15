@@ -21,7 +21,6 @@ $container['logger'] = function ($c) {
 
 // pdo
 $container['pdo'] = function ($c) {
-	echo "call pdo<br>";
 	$username = 'root';
 	$password = 'root';
 	$database = 'skysemi_phpauth_c95';

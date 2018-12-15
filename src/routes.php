@@ -4,12 +4,19 @@ use Slim\Http\Request;
 use Slim\Http\Response;
 
 // Routes
-$app->get('/hello', function (Request $request, Response $response, array $args) {
-	var_dump($this->pdo);
 
-	return $this->renderer->render($response, 'index.phtml', $args);
-//	return $this->renderer->render($response, 'index.phtml', $args);
-});
+$app->group('/user', function() use($app){
+	$app->get('/', function (Request $request, Response $response, array $args) {
+		return $this->renderer->render($response, 'user/index.phtml', $args);
+	});
+
+})->add(function ($request, $response, $next) {
+	$response->getBody()->write('It is now ');
+	$response = $next($request, $response);
+	return $response;
+});;
+
+
 $app->get('/', function (Request $request, Response $response, array $args) {
 	return $this->renderer->render($response, 'index.phtml', $args);
 });
@@ -18,7 +25,16 @@ $app->get('/login', function (Request $request, Response $response, array $args)
 });
 $app->post('/login', function (Request $request, Response $response, array $args) {
 	//認証
-
+	$auth = new \Delight\Auth\Auth($this->pdo);
+	$email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
+	$password = filter_input(INPUT_POST, 'password');
+	$auth->login($email, $password);
+	if ($auth->isLoggedIn()) {
+		echo 'User is signed in';
+	}
+	else {
+		echo 'User is not signed in yet';
+	}
 	exit;
 });
 $app->post('/store', function (Request $request, Response $response, array $args) {
