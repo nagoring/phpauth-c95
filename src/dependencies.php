@@ -21,10 +21,23 @@ $container['logger'] = function ($c) {
 
 // pdo
 $container['pdo'] = function ($c) {
-	$username = 'root';
-	$password = 'root';
-	$database = 'skysemi_phpauth_c95';
-	$pdo = new \PDO("mysql:dbname={$database};host=localhost;charset=utf8mb4", $username, $password);
-	return $pdo;
+	try{
+		$username = 'root';
+		$password = '';
+		$database = 'skysemi_phpauth_c95';
+		$host = 'localhost';
+		$pdo = new \PDO("mysql:dbname={$database};host={$host};charset=utf8mb4", $username, $password);
+		return $pdo;
+
+	}catch(\Throwable $ex){
+	    echo $ex->getMessage();
+	}
+
 };
 
+$container['auth'] = function ($c){
+	$auth = new \Delight\Auth\Auth($c['pdo']);
+	return $auth;
+};
+
+$container['SITE_URL'] = 'http://phpauth-c95.test';

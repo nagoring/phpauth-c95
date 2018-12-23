@@ -9,15 +9,19 @@ $app->group('/user', function() use($app){
 	$app->get('/', function (Request $request, Response $response, array $args) {
 		return $this->renderer->render($response, 'user/index.phtml', $args);
 	});
-
 })->add(function ($request, $response, $next) {
-	$response->getBody()->write('It is now ');
+	$auth = new \Delight\Auth\Auth($this->pdo);
+	if (!$auth->isLoggedIn()) {
+		header("Location: {$this->SITE_URL}");
+		exit;
+	}
 	$response = $next($request, $response);
 	return $response;
-});;
+});
 
 
 $app->get('/', function (Request $request, Response $response, array $args) {
+//	$auth = new \Delight\Auth\Auth($this->pdo);
 	return $this->renderer->render($response, 'index.phtml', $args);
 });
 $app->get('/login', function (Request $request, Response $response, array $args) {
@@ -30,18 +34,15 @@ $app->post('/login', function (Request $request, Response $response, array $args
 	$password = filter_input(INPUT_POST, 'password');
 	$auth->login($email, $password);
 	if ($auth->isLoggedIn()) {
-		echo 'User is signed in';
+		header("Location: {$this->SITE_URL}/user/");
+		exit;
 	}
 	else {
-		echo 'User is not signed in yet';
+		echo 'ログイン失敗';
 	}
 	exit;
 });
 $app->post('/store', function (Request $request, Response $response, array $args) {
-	if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-		echo "Invalid request method";
-		exit;
-	}
 	try {
 		$auth = new \Delight\Auth\Auth($this->pdo);
 		$email = filter_input(INPUT_POST, 'email', FILTER_VALIDATE_EMAIL);
@@ -51,13 +52,13 @@ $app->post('/store', function (Request $request, Response $response, array $args
 			mb_language("japanese");
 			mb_internal_encoding("UTF-8");
 			$to = $email;
-			$url = 'http://localhost:8080/verify_email?selector=' . \urlencode($selector) . '&token=' . \urlencode($token);
+			$url = $this->SITE_URL . '/verify_email?selector=' . \urlencode($selector) . '&token=' . \urlencode($token);
 
 			$subject = "会員登録認証";
 			$body = "認証URLです。¥n{$url}";
 			$from = "nagomi.github@gmail.com";
 			\mb_send_mail($to,$subject,$body,"From:".$from);
-			header("Location: http://localhost:8080/login");
+			header("Location: {$this->SITE_URL}/login");
 			exit;
 		});
 	}
@@ -73,8 +74,7 @@ $app->post('/store', function (Request $request, Response $response, array $args
 	catch (\Delight\Auth\TooManyRequestsException $e) {
 		die('Too many requests');
 	}
-//	redirecct();
-//	return $this->renderer->render($response, 'index.phtml', $args);
+	header("Location: {$this->SITE_URL}/login");
 });
 $app->get('/verify_email', function (Request $request, Response $response, array $args) {
 	$query = $request->getQueryParams();
@@ -82,10 +82,16 @@ $app->get('/verify_email', function (Request $request, Response $response, array
 	$token = $query['token'];
 	$auth = new \Delight\Auth\Auth($this->pdo);
 	$auth->confirmEmail($selector, $token);
-	var_dump($query);
+	header("Location: {$this->SITE_URL}/login");
 	exit;
-
 });
+$app->get('/logout', function (Request $request, Response $response, array $args) {
+	$auth = new \Delight\Auth\Auth($this->pdo);
+	$auth->logOut();
+	return $this->renderer->render($response, 'logout.phtml', $args);
+});
+
+
 
 //$app->get('/[{name}]', function (Request $request, Response $response, array $args) {
 //    // Sample log message
