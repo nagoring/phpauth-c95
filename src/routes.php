@@ -88,6 +88,7 @@ $app->get('/verify_email', function (Request $request, Response $response, array
 $app->get('/logout', function (Request $request, Response $response, array $args) {
 	$auth = new \Delight\Auth\Auth($this->pdo);
 	$auth->logOut();
+	$auth->destroySession();
 	return $this->renderer->render($response, 'logout.phtml', $args);
 });
 
